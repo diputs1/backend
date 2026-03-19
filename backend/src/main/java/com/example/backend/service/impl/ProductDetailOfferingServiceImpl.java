@@ -8,22 +8,23 @@ import com.example.backend.reponsitory.ProductDetailOfferingRepo;
 import com.example.backend.reponsitory.ProductDetailRepo;
 import com.example.backend.reponsitory.ProductOfferingRepo;
 import com.example.backend.service.ProductDetailOfferingService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
+@RequiredArgsConstructor
 public class ProductDetailOfferingServiceImpl  implements ProductDetailOfferingService {
 
-    @Autowired
-    private ProductOfferingRepo productOfferingRepo;
 
-    @Autowired
-    private ProductDetailRepo productDetailRepo;
-    @Autowired
-    private ProductDetailOfferingRepo productDetailOfferingRepo;
-    @Override
+    private final ProductOfferingRepo productOfferingRepo;
+
+    private final ProductDetailRepo productDetailRepo;
+
+    private final ProductDetailOfferingRepo productDetailOfferingRepo;
+
     public ProductOffering assignmentProductDetail(AssignProductReq request) {
         if(request.getProductOfferingId()== null ){
           throw new RuntimeException("product offering id not null");

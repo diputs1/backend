@@ -9,6 +9,7 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.example.backend.service.ProductOfferingService;
@@ -19,12 +20,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ProductOfferingServiceImpl implements ProductOfferingService {
 
-    @Autowired
-    private EntityManager entityManager;
-    @Autowired
-    private ProductOfferingRepo productsOfferingRepo;
+
+    private final EntityManager entityManager;
+
+    private final ProductOfferingRepo productsOfferingRepo;
 
     @Override
     public ProductOffering getById(Long id) {

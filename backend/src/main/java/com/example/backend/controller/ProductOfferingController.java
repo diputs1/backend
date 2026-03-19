@@ -2,6 +2,7 @@ package com.example.backend.controller;
 
 import com.example.backend.dto.request.ProductOfferingCreateRequest;
 import com.example.backend.entity.ProductOffering;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,12 +10,12 @@ import com.example.backend.service.ProductOfferingService;
 
 import java.util.List;
 
-
+@RequiredArgsConstructor
 @RestController
 public class ProductOfferingController {
 
-    @Autowired
-    private ProductOfferingService productsOfferingService;
+
+    private final ProductOfferingService productsOfferingService;
 
     @GetMapping("filter")
     public ResponseEntity<List<ProductOffering>> filter(@RequestParam(name="name", required = false) String name,

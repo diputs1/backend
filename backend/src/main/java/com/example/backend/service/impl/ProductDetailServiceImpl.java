@@ -4,15 +4,17 @@ import com.example.backend.dto.request.ProductDetailCreateRequest;
 import com.example.backend.entity.ProductDetail;
 import com.example.backend.reponsitory.ProductDetailRepo;
 import com.example.backend.service.ProductDetailService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 @Service
+@RequiredArgsConstructor
 public class ProductDetailServiceImpl implements ProductDetailService {
 
-    @Autowired
-    private ProductDetailRepo productDetailRepos;
+
+    private final ProductDetailRepo productDetailRepos;
 
     @Override
     public List<ProductDetail> getAll() {
