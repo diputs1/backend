@@ -1,31 +1,30 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.request.ProductDetailCreateRequest;
-import com.example.backend.entity.ProductDetail;
+import com.example.backend.dto.response.ProductDetailResponse;
+import com.example.backend.mapper.ProductDtoMapper;
 import com.example.backend.service.ProductDetailService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/v1/product-details")
 @RequiredArgsConstructor
 public class ProductDetailController {
-    private final ProductDetailService productDetailServices;
 
-    @GetMapping("/product_detail")
-    public ResponseEntity<List<ProductDetail>> getAll(){
-        return ResponseEntity.ok(productDetailServices.getAll());
+    private final ProductDetailService productDetailServices;
+    private final ProductDtoMapper productDtoMapper;
+
+    @GetMapping
+    public ResponseEntity<List<ProductDetailResponse>> getAll() {
+        return ResponseEntity.ok(productDtoMapper.toDetailResponseList(productDetailServices.getAll()));
     }
 
-    @PostMapping("product-detail-dto")
-    public ResponseEntity<ProductDetail> productDetail(@RequestBody ProductDetailCreateRequest request){
-        ProductDetail productDetails = productDetailServices.createProductDetail(request);
-        return ResponseEntity.ok(productDetails);
+    @PostMapping
+    public ResponseEntity<ProductDetailResponse> create(@RequestBody ProductDetailCreateRequest request) {
+        return ResponseEntity.ok(productDtoMapper.toDetailResponse(productDetailServices.createProductDetail(request)));
     }
 }

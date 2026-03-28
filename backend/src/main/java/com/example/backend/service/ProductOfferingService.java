@@ -1,14 +1,17 @@
 package com.example.backend.service;
 
 import com.example.backend.dto.request.ProductOfferingCreateRequest;
+import com.example.backend.dto.request.ProductOfferingFilter;
 import com.example.backend.entity.ProductOffering;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface ProductOfferingService {
     ProductOffering getById(Long id);
 
-    List<ProductOffering> getAll();
+    Page<ProductOffering> findAll(Pageable pageable);
 
     List<ProductOffering> getByName(String name);
     List<ProductOffering> getByField(String name, String color);
@@ -16,6 +19,7 @@ public interface ProductOfferingService {
     ProductOffering create(ProductOffering product);
     ProductOffering update(Long id, ProductOffering product);
 
-    ProductOffering     createProduct(ProductOfferingCreateRequest request);
-    List<ProductOffering> filter(String name, Long minPrice, Long MaxPrice, String color);
+    ProductOffering createProduct(ProductOfferingCreateRequest request);
+
+    Page<ProductOffering> filter(ProductOfferingFilter productOfferingFilter, Pageable pageable);
 }

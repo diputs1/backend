@@ -2,19 +2,25 @@ package com.example.backend.service.impl;
 
 import com.example.backend.common.Ustatus;
 import com.example.backend.dto.request.ProductOfferingCreateRequest;
+import com.example.backend.dto.request.ProductOfferingFilter;
 import com.example.backend.entity.ProductOffering;
-import jakarta.persistence.Entity;
+import com.example.backend.exception.ProductNotFoundException;
+import com.example.backend.reponsitory.ProductOfferingRepo;
+import com.example.backend.service.ProductOfferingService;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import com.example.backend.service.ProductOfferingService;
-import com.example.backend.exception.ProductNotFoundException;
-import com.example.backend.reponsitory.ProductOfferingRepo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,9 +29,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductOfferingServiceImpl implements ProductOfferingService {
 
-
     private final EntityManager entityManager;
-
     private final ProductOfferingRepo productsOfferingRepo;
 
     @Override
@@ -35,8 +39,8 @@ public class ProductOfferingServiceImpl implements ProductOfferingService {
     }
 
     @Override
-    public List<ProductOffering> getAll() {
-        return productsOfferingRepo.findAll();
+    public Page<ProductOffering> findAll(Pageable pageable) {
+        return productsOfferingRepo.findAll(pageable);
     }
 
     @Override
@@ -54,18 +58,14 @@ public class ProductOfferingServiceImpl implements ProductOfferingService {
         if (product.getId() != null) {
             throw new RuntimeException("Khong duoc phep truyen vao id");
         }
-            /*Random random = new Random();
-            product.setId(random.nextLong(10000));*/
-        ProductOffering saveProduct = productsOfferingRepo.save(product); //update or save
-        return saveProduct;
+        return productsOfferingRepo.save(product);
     }
 
     @Override
     public ProductOffering update(Long id, ProductOffering product) {
         getById(id);
         product.setId(id);
-        ProductOffering saveProduct1 = productsOfferingRepo.save(product);
-        return saveProduct1;
+        return productsOfferingRepo.save(product);
     }
 
     @Override
@@ -78,42 +78,79 @@ public class ProductOfferingServiceImpl implements ProductOfferingService {
         productOffering.setColor(request.getColor());
         productOffering.setPrice(request.getPrice());
         productOffering.setStatus(Ustatus.ACTIVE);
-        ProductOffering saveproduct1 = productsOfferingRepo.save(productOffering);
-        return saveproduct1;
-
+        return productsOfferingRepo.save(productOffering);
     }
 
     @Override
-    public List<ProductOffering> filter(String name, Long minPrice, Long maxPrice, String color) {
-        CriteriaBuilder criteria = entityManager.getCriteriaBuilder();
-        /*La JPA entityManager dung de tuong tac voi db*/
-        CriteriaQuery<ProductOffering> query = criteria.createQuery(ProductOffering.class);
-        /*Truy van tra ve kieu ProductOffering*/
-        Root<ProductOffering> root = query.from(ProductOffering.class);
-        /*bang chinh cua query */
-        List<Predicate> predicates = new ArrayList<>();
-        if (name != null && !name.isEmpty()) {
-            Predicate predicate = criteria.like(root.get("name"), "%" + name + "%");
-            /*.like giong sql */
-            predicates.add(predicate);
-            /*.them dieu kien vao query */
-        }
+    public Page<ProductOffering> filter(ProductOfferingFilter productOfferingFilter, Pageable pageable) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
-        if (minPrice != null) {
-            Predicate predicate = criteria.greaterThanOrEqualTo(root.get("price"), minPrice);
-            predicates.add(predicate);
+        CriteriaQuery<ProductOffering> dataQuery = cb.createQuery(ProductOffering.class);
+        Root<ProductOffering> root = dataQuery.from(ProductOffering.class);
+        List<Predicate> predicates = buildFilterPredicates(root, cb, productOfferingFilter);
+        if (!predicates.isEmpty()) {
+            dataQuery.where(predicates.toArray(Predicate[]::new));
         }
-        if (maxPrice != null) {
-            Predicate predicate = criteria.lessThanOrEqualTo(root.get("price"), maxPrice);
-            predicates.add(predicate);
+        dataQuery.orderBy(buildOrders(cb, root, pageable));
+
+        TypedQuery<ProductOffering> typedQuery = entityManager.createQuery(dataQuery);
+        typedQuery.setFirstResult((int) pageable.getOffset());
+        typedQuery.setMaxResults(pageable.getPageSize());
+        List<ProductOffering> content = typedQuery.getResultList();
+
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<ProductOffering> countRoot = countQuery.from(ProductOffering.class);
+        countQuery.select(cb.count(countRoot));
+        List<Predicate> countPredicates = buildFilterPredicates(countRoot, cb, productOfferingFilter);
+        if (!countPredicates.isEmpty()) {
+            countQuery.where(countPredicates.toArray(Predicate[]::new));
         }
-        if (color != null && !color.isEmpty()) {
-            Predicate predicate = criteria.like(root.get("color"), "%" + color + "%");
-            predicates.add(predicate);
-        }
-        query.where(predicates.toArray(new Predicate[0]));
-        return entityManager.createQuery(query).getResultList();
+        long total = entityManager.createQuery(countQuery).getSingleResult();
+
+        return new PageImpl<>(content, pageable, total);
     }
 
+    private static List<Predicate> buildFilterPredicates(
+            Root<ProductOffering> root, CriteriaBuilder cb, ProductOfferingFilter f) {
+        List<Predicate> predicates = new ArrayList<>();
+        if (f.getName() != null && !f.getName().isEmpty()) {
+            predicates.add(cb.like(root.get("name"), "%" + f.getName() + "%"));
+        }
+        if (f.getMinPrice() != null) {
+            predicates.add(cb.greaterThanOrEqualTo(root.get("price"), f.getMinPrice()));
+        }
+        if (f.getMaxPrice() != null) {
+            predicates.add(cb.lessThanOrEqualTo(root.get("price"), f.getMaxPrice()));
+        }
+        if (f.getColor() != null && !f.getColor().isEmpty()) {
+            predicates.add(cb.like(root.get("color"), "%" + f.getColor() + "%"));
+        }
+        return predicates;
+    }
 
+    private static List<Order> buildOrders(CriteriaBuilder cb, Root<ProductOffering> root, Pageable pageable) {
+        List<Order> orders = new ArrayList<>();
+        for (Sort.Order sortOrder : pageable.getSort()) {
+            Path<?> path = sortPropertyPath(root, sortOrder.getProperty());
+            orders.add(sortOrder.isAscending() ? cb.asc(path) : cb.desc(path));
+        }
+        if (orders.isEmpty()) {
+            orders.add(cb.asc(root.get("Id")));
+        }
+        return orders;
+    }
+
+    private static Path<?> sortPropertyPath(Root<ProductOffering> root, String property) {
+        if (property == null) {
+            return root.get("Id");
+        }
+        return switch (property) {
+            case "id", "Id" -> root.get("Id");
+            case "name" -> root.get("name");
+            case "price" -> root.get("price");
+            case "color" -> root.get("color");
+            case "status" -> root.get("status");
+            default -> root.get("Id");
+        };
+    }
 }

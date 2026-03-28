@@ -1,24 +1,24 @@
 package com.example.backend.controller;
 
 import com.example.backend.dto.request.AssignProductReq;
-import com.example.backend.entity.ProductOffering;
+import com.example.backend.dto.response.ProductOfferingResponse;
+import com.example.backend.mapper.ProductDtoMapper;
 import com.example.backend.service.ProductDetailOfferingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequestMapping("/v1/product-detail-offerings")
 @RequiredArgsConstructor
 public class ProductDetailOfferingController {
 
     private final ProductDetailOfferingService productDetailOfferingService;
+    private final ProductDtoMapper productDtoMapper;
 
-    @PostMapping("/assign-product-offering")
-    public ResponseEntity<ProductOffering> assignProductDetail(@RequestBody AssignProductReq request){
-        ProductOffering productOffering = productDetailOfferingService.assignmentProductDetail(request);
-        return ResponseEntity.ok(productOffering);
+    @PostMapping
+    public ResponseEntity<ProductOfferingResponse> assignProductDetail(@RequestBody AssignProductReq request) {
+        return ResponseEntity.ok(productDtoMapper.toOfferingResponse(
+                productDetailOfferingService.assignmentProductDetail(request)));
     }
 }
