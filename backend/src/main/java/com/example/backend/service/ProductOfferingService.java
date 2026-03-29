@@ -13,6 +13,8 @@ public interface ProductOfferingService {
 
     Page<ProductOffering> findAll(Pageable pageable);
 
+    Page<ProductOffering> findAll(ProductOfferingFilter filter, Pageable pageable);
+
     List<ProductOffering> getByName(String name);
     List<ProductOffering> getByField(String name, String color);
 
@@ -20,6 +22,4 @@ public interface ProductOfferingService {
     ProductOffering update(Long id, ProductOffering product);
 
     ProductOffering createProduct(ProductOfferingCreateRequest request);
-
-    Page<ProductOffering> filter(ProductOfferingFilter productOfferingFilter, Pageable pageable);
 }

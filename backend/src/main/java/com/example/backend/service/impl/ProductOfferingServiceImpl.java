@@ -44,6 +44,24 @@ public class ProductOfferingServiceImpl implements ProductOfferingService {
     }
 
     @Override
+    public Page<ProductOffering> findAll(ProductOfferingFilter filter, Pageable pageable) {
+        if (!hasFilterCriteria(filter)) {
+            return findAll(pageable);
+        }
+        return findWithFilters(filter, pageable);
+    }
+
+    private static boolean hasFilterCriteria(ProductOfferingFilter f) {
+        if (f == null) {
+            return false;
+        }
+        return (f.getName() != null && !f.getName().isEmpty())
+                || (f.getColor() != null && !f.getColor().isEmpty())
+                || f.getMinPrice() != null
+                || f.getMaxPrice() != null;
+    }
+
+    @Override
     public List<ProductOffering> getByName(String name) {
         return productsOfferingRepo.findByName(name);
     }
@@ -81,8 +99,7 @@ public class ProductOfferingServiceImpl implements ProductOfferingService {
         return productsOfferingRepo.save(productOffering);
     }
 
-    @Override
-    public Page<ProductOffering> filter(ProductOfferingFilter productOfferingFilter, Pageable pageable) {
+    private Page<ProductOffering> findWithFilters(ProductOfferingFilter productOfferingFilter, Pageable pageable) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
 
         CriteriaQuery<ProductOffering> dataQuery = cb.createQuery(ProductOffering.class);

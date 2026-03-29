@@ -24,25 +24,11 @@ public class ProductOfferingController {
     public ResponseEntity<PageResponse<ProductOfferingResponse>> list(
             @ModelAttribute ProductOfferingFilter filter,
             Pageable pageable) {
-        if (hasFilterCriteria(filter)) {
-            return ResponseEntity.ok(productDtoMapper.toOfferingPageResponse(
-                    productsOfferingService.filter(filter, pageable)));
-        }
         return ResponseEntity.ok(productDtoMapper.toOfferingPageResponse(
-                productsOfferingService.findAll(pageable)));
+                productsOfferingService.findAll(filter, pageable)));
     }
 
-    private static boolean hasFilterCriteria(ProductOfferingFilter f) {
-        if (f == null) {
-            return false;
-        }
-        return (f.getName() != null && !f.getName().isEmpty())
-                || (f.getColor() != null && !f.getColor().isEmpty())
-                || f.getMinPrice() != null
-                || f.getMaxPrice() != null;
-    }
-
-    @GetMapping("/{id:\\d+}")
+    @GetMapping("/id")
     public ResponseEntity<ProductOfferingResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(productDtoMapper.toOfferingResponse(productsOfferingService.getById(id)));
     }
@@ -52,7 +38,7 @@ public class ProductOfferingController {
         return ResponseEntity.ok(productDtoMapper.toOfferingResponse(productsOfferingService.createProduct(request)));
     }
 
-    @PutMapping("/{id:\\d+}")
+    @PutMapping("/id")
     public ResponseEntity<ProductOfferingResponse> update(
             @PathVariable Long id,
             @RequestBody ProductOfferingUpdateRequest request) {
